@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IEC61850 Client RESTFul server driver</title>
+
+  <!-- Bootstrap 5 (CDN). Replace with local if needed. -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #0b0f14;
+    --panel: #0f1720;
+    --panel-2: rgba(255,255,255,.02);
+    --border: #1f2a37;
+    --text: #e5e7eb;
+    --text-2: #cbd5e1;
+    --muted: #9aa4b2;
+    --muted-2: #94a3b8;
+    --accent: rgba(13,110,253,.35);
+    --warn-border: rgba(255,193,7,.35);
+    --warn-bg: rgba(255,193,7,.10);
+  }
+
+  /* Base */
+  body { background: var(--bg); color: var(--text); }
+  a { text-decoration: none; color: inherit; }
+  .mono, .code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  .small2 { font-size: .92rem; }
+
+  /* Text helpers */
+  .muted { color: var(--muted) !important; }
+  h1, h2, h3, h4, h5, h6 { color: #f8fafc; }
+  .lead { color: var(--text-2); }
+
+  /* Panels / cards */
+  .bg-panel { background: var(--panel); border: 1px solid var(--border); }
+  .pill { border: 1px solid var(--border); background: var(--panel-2); border-radius: .75rem; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 1rem; }
+  .card-body { color: var(--text-2); } /* fixes “faded” content inside cards */
+  .card-header{
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,.04);
+    color: #f1f5f9 !important;         /* fixes grayed-out header titles */
+    font-weight: 600;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+  }
+  .card-header * { color: inherit !important; }
+
+  /* Tab styling */
+  .nav-tabs { border-bottom: 1px solid var(--border); }
+  .nav-tabs .nav-link { color: var(--muted-2); border: 0; }
+  .nav-tabs .nav-link:hover { color: var(--text); }
+  .nav-tabs .nav-link.active{
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-bottom-color: var(--panel);
+    border-top-left-radius: .75rem;
+    border-top-right-radius: .75rem;
+  }
+  .tab-content{
+    border: 1px solid var(--border);
+    border-top: 0;
+    border-radius: 0 0 .75rem .75rem;
+    background: var(--panel);
+  }
+
+  /* Tables */
+  .table { color: var(--text); }
+  .table thead th{
+    color: var(--text-2);
+    border-bottom: 1px solid var(--border);
+  }
+  .table td, .table th { border-color: var(--border); }
+  .table tbody tr:hover { background: rgba(255,255,255,.03); }
+
+  /* HR */
+  .hr { border-top: 1px solid var(--border); opacity: 1; }
+
+  /* Badges */
+  .badge-soft { background: rgba(13,110,253,.15); color: #9ec5fe; border: 1px solid var(--accent); }
+  .badge-soft-ok { background: rgba(25,135,84,.15); color: #a7f3d0; border: 1px solid rgba(25,135,84,.35); }
+  .badge-soft-warn { background: rgba(255,193,7,.12); color: #fde68a; border: 1px solid rgba(255,193,7,.30); }
+  .badge-soft-danger { background: rgba(220,53,69,.12); color: #fecaca; border: 1px solid rgba(220,53,69,.30); }
+
+  /* Callout (your yellow box) */
+  .callout{
+    border: 1px solid var(--warn-border);
+    background: var(--warn-bg);
+    border-radius: .75rem;
+    padding: 1rem;
+    color: var(--text) !important;      /* fixes grayed-out text inside callout */
+  }
+  .callout .muted { color: var(--text-2) !important; }
+  .callout ul, .callout ol, .callout li { color: var(--text) !important; }
+  .callout .fw-semibold { color: #f8fafc !important; }
+
+  /* Code blocks */
+  pre, code { color: var(--text); }
+  pre{ background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: .75rem; }
+  	.navbar {
+	  background: var(--panel) !important;
+	  border-bottom: 1px solid var(--border) !important;
+	}
+
+	.navbar-brand {
+	  color: var(--text) !important;
+	}
+
+	.navbar-brand:hover {
+	  color: #f8fafc !important;
+	}
+
+	.navbar .nav-link {
+	  color: var(--muted-2) !important;
+	}
+
+	.navbar .nav-link:hover {
+	  color: var(--text) !important;
+	}
+
+	.navbar .nav-link.active {
+	  color: var(--text) !important;
+	  font-weight: 600;
+	}
+	
+		.navbar-toggler {
+	  border-color: var(--border);
+	}
+
+	.navbar-toggler-icon {
+	  filter: invert(1) brightness(1.5);
+	}
+
+
+</style>
+
+</head>
+
+<body>
+<nav class="navbar navbar-expand-lg bg-panel border-bottom mb-4">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="index.html">TestBed SCADA</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMain">
+      <ul class="navbar-nav ms-auto">
+
+        <li class="nav-item">
+          <a class="nav-link" href="index.html">Home</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="IEC61850_Client_RESTFul_Server_Driver.html">
+            IEC 61850
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="SLD_Interaction_Application_FULL.html">
+            SLD
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="Event_List_Interaction_Application_FULL.html">
+            Event
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="IEC104_Slave_Integration_FULL_EXTENDED.html">
+            IEC 104
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/YOUR_USERNAME/TestBedScada">
+            Project
+          </a>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+</nav>
+  <div class="container py-4 py-md-5">
+
+    <!-- HERO -->
+    <div class="p-4 p-md-5 rounded-4 bg-panel mb-4">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <h1 class="mb-2">IEC61850 Client RESTFul server driver</h1>
+          <div class="muted small2">
+            FastAPI + multi-device orchestration + protocol client wrapper. Real-time monitoring via WebSockets. Control via REST.
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge badge-soft rounded-pill px-3 py-2">REST</span>
+          <span class="badge badge-soft rounded-pill px-3 py-2">WebSocket Streams</span>
+          <span class="badge badge-soft rounded-pill px-3 py-2">Multi-Device</span>
+          <span class="badge badge-soft rounded-pill px-3 py-2">RCB / Reporting</span>
+          <span class="badge badge-soft rounded-pill px-3 py-2">Commands</span>
+        </div>
+      </div>
+
+      <hr class="hr my-4">
+
+      <div class="row g-3">
+        <div class="col-md-7">
+          <div class="muted">
+            This package exposes IEC 61850 client capabilities through a REST + WebSocket server. It is organized as a small stack:
+            a protocol client library (single device), an application orchestrator (multiple devices), and an integration server (FastAPI).
+          </div>
+          <div class="mt-3 muted">
+            Boundaries:
+            <span class="mono">Library → Application → Server</span>.
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div class="p-3 rounded-4 pill">
+            <div class="fw-semibold mb-2">High-level flow</div>
+            <ol class="mb-0 small2 muted">
+              <li>Start FastAPI server.</li>
+              <li>Server creates a single application instance (singleton for the process).</li>
+              <li>Application creates one client per host from JSON config.</li>
+              <li>Each client connects in its own background thread.</li>
+              <li>RCBs enabled automatically on connect; reports stream to subscribers.</li>
+              <li>External callers use REST for reads/commands and WS for live streams.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card h-100 rounded-4">
+          <div class="card-header fw-semibold">Component map</div>
+          <div class="card-body">
+            <div class="small2 muted mb-2"><span class="badge badge-soft rounded-pill">IEC61850ClientLibrary</span> Single-device protocol client wrapper.</div>
+            <div class="small2 muted mb-2"><span class="badge badge-soft rounded-pill">IEC61850ClientApplication</span> Multi-device orchestration + cache + callbacks.</div>
+            <div class="small2 muted"><span class="badge badge-soft rounded-pill">APIIntegrationServer</span> FastAPI REST + WS interface for external systems.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 rounded-4">
+          <div class="card-header fw-semibold">External interfaces</div>
+          <div class="card-body small2 muted">
+            <ul class="mb-0">
+              <li>WS: <span class="mono">/reported_data</span> live reported values</li>
+              <li>WS: <span class="mono">/connection_status</span> live state changes</li>
+              <li>WS: <span class="mono">/log_command</span> service-call telemetry</li>
+              <li>REST: <span class="mono">/service</span>, <span class="mono">/dataset</span>, <span class="mono">/command</span>, <span class="mono">/manage</span>, <span class="mono">/connections_status</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 rounded-4">
+          <div class="card-header fw-semibold">Runtime properties</div>
+          <div class="card-body small2 muted">
+            <ul class="mb-0">
+              <li>Thread-per-host connection startup (daemon threads)</li>
+              <li>Callback-driven report updates</li>
+              <li>Central caches for reported data, dataset model, connection status</li>
+              <li>Broadcast fan-out to multiple WebSocket subscribers</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-supporting" data-bs-toggle="tab" data-bs-target="#supporting" type="button" role="tab">Supporting files</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-library" data-bs-toggle="tab" data-bs-target="#library" type="button" role="tab">IEC61850ClientLibrary</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-app" data-bs-toggle="tab" data-bs-target="#application" type="button" role="tab">IEC61850ClientApplication</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-server" data-bs-toggle="tab" data-bs-target="#server" type="button" role="tab">APIIntegrationServer</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-usage" data-bs-toggle="tab" data-bs-target="#usage" type="button" role="tab">Usage</button>
+      </li>
+    </ul>
+
+    <div class="tab-content p-3 p-md-4" id="mainTabsContent">
+
+      <!-- SUPPORTING FILES TAB -->
+      <div class="tab-pane fade show active" id="supporting" role="tabpanel">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <h2 class="h4 mb-0">Supporting files</h2>
+          <span class="badge badge-soft-warn rounded-pill px-3 py-2">Entry + Config</span>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">FastAPI entry script (iec61850.py)</div>
+              <div class="card-body">
+                <p class="muted small2 mb-2">
+                  This file is responsible for starting the FastAPI server process. It instantiates the server wrapper
+                  and runs it under Uvicorn. The server internally creates exactly one application instance for the process,
+                  which then spins up multiple device clients (one per configured host) using background threads.
+                </p>
+
+                <div class="callout small2">
+                  <div class="fw-semibold mb-1">Purpose</div>
+                  <ul class="mb-0">
+                    <li>Start Uvicorn</li>
+                    <li>Create APIIntegrationServer instance</li>
+                    <li>Expose REST and WebSocket interfaces</li>
+                    <li>Trigger application connect during FastAPI lifespan startup</li>
+                  </ul>
+                </div>
+
+                <hr class="hr my-3">
+
+                <div class="small2 muted">
+                  Expected behavior: on process start, the server begins connecting to all configured hosts automatically.
+                  External systems then consume live streams or issue service/command calls.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Configuration file (config.json)</div>
+              <div class="card-body">
+                <p class="muted small2 mb-2">
+                  The configuration defines each target host, its IP/port, and reporting subscriptions (RCBs).
+                  The application loads this file at startup and creates one client instance per host.
+                </p>
+
+                <div class="row g-3">
+                  <div class="col-12">
+                    <div class="p-3 rounded-4 pill small2">
+                      <div class="fw-semibold mb-1">Conceptual schema</div>
+                      <div class="muted">
+                        <div class="mono">{</div>
+                        <div class="mono ms-3">"&lt;host_name&gt;": { "ip": "&lt;ip&gt;", "port": 102, "rcbs": [ ... ] }</div>
+                        <div class="mono">}</div>
+                      </div>
+                      <div class="muted mt-2">
+                        Each <span class="mono">rcbs</span> entry maps an RCB reference to optional parameters like
+                        <span class="mono">trg_opts</span> and <span class="mono">intg_pd</span>.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <hr class="hr my-3">
+
+                <div class="small2 muted">
+                  Reality check: config correctness decides whether the system “just works” or “mysteriously does nothing”.
+                  Keep this file version-controlled and reviewed.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="hr my-4">
+
+        <div class="card rounded-4">
+          <div class="card-header fw-semibold">End-to-end threading and data flow</div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-lg-6">
+                <div class="p-3 rounded-4 pill small2">
+                  <div class="fw-semibold mb-2">Threading model</div>
+                  <ul class="muted mb-0">
+                    <li><span class="mono">IEC61850ClientApplication.connect()</span> starts a daemon thread per host for connection.</li>
+                    <li>Protocol library may also maintain internal reconnect behavior.</li>
+                    <li>FastAPI runs on an async event loop, broadcasts to WS subscribers from callbacks via thread-safe scheduling.</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="col-lg-6">
+                <div class="p-3 rounded-4 pill small2">
+                  <div class="fw-semibold mb-2">Data flow</div>
+                  <ol class="muted mb-0">
+                    <li>Library receives a report → decodes values.</li>
+                    <li>Application updates <span class="mono">_reported_data[host]</span>.</li>
+                    <li>Server callback schedules broadcast to <span class="mono">/reported_data</span> subscribers.</li>
+                    <li>Consumers receive JSON updates in real-time.</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIBRARY TAB -->
+      <div class="tab-pane fade" id="library" role="tabpanel">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <h2 class="h4 mb-0">IEC61850ClientLibrary</h2>
+          <span class="badge text-bg-secondary rounded-pill px-3 py-2">Single-device client</span>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Purpose</div>
+              <div class="card-body small2 muted">
+                <ul class="mb-0">
+                  <li>Wrap IEC 61850 client connection lifecycle.</li>
+                  <li>Browse server model: logical devices, logical nodes, datasets.</li>
+                  <li>Read values and map MMS structures into Python dicts.</li>
+                  <li>Enable RCB reporting and decode report payloads.</li>
+                  <li>Send control commands (including cancellation variants).</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Class definition</div>
+              <div class="card-body small2">
+                <div class="muted mb-2">Class: <span class="mono">Iec61850Client</span></div>
+                <div class="p-3 rounded-4 pill">
+                  <div class="fw-semibold mb-2">Constructor</div>
+                  <div class="mono">__init__(host_id, host_name="127.0.0.1", port_no=102)</div>
+                  <div class="muted mt-2">
+                    Initializes connection handles, retry policy, callback hooks, and internal caches.
+                  </div>
+                </div>
+                <div class="muted mt-3">
+                  Note: you must call <span class="mono">create_client_connection()</span> before <span class="mono">connect()</span>.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card rounded-4 mb-3">
+          <div class="card-header fw-semibold">Public APIs</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:22%">Method</th>
+                    <th style="width:14%">Inputs</th>
+                    <th style="width:14%">Output</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody class="small2">
+                  <tr>
+                    <td class="mono">create_client_connection()</td>
+                    <td>none</td>
+                    <td>none</td>
+                    <td>Create IEC connection handle and store MMS connection reference.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">connect()</td>
+                    <td>none</td>
+                    <td><span class="badge text-bg-secondary rounded-pill">bool</span></td>
+                    <td>Connect to the device, attach connection handler, and load initial server directory info.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">stop()</td>
+                    <td>none</td>
+                    <td>none</td>
+                    <td>Stop reconnect loop and destroy connection resources.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">get_ied_name()</td>
+                    <td>none</td>
+                    <td>string/None</td>
+                    <td>Returns detected IED name inferred from logical device list.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">set_reconnection_parameters(back_off_time=2, max_back_off_time=30)</td>
+                    <td>numbers</td>
+                    <td>none</td>
+                    <td>Configure exponential backoff for reconnect attempts.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">set_external_callback_function(fn)</td>
+                    <td>fn(host_id,state,reconnecting)</td>
+                    <td>none</td>
+                    <td>Register external connection-state callback.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">set_report_data_external_callback_function(fn)</td>
+                    <td>fn(host_id,reported_data)</td>
+                    <td>none</td>
+                    <td>Register external report callback invoked on report updates.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">service_call(service: dict)</td>
+                    <td>{"name","parameters"}</td>
+                    <td>any/None</td>
+                    <td>Dispatch entrypoint that routes to an internal service handler when connected.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">get_rcb(rcb_ref)</td>
+                    <td>rcb_ref</td>
+                    <td>rcb</td>
+                    <td>Read RCB, discover dataset members, build spec maps for report decoding.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">enable_rcb(rcb, rcb_ref, trg_opts=None, intg_pd=None)</td>
+                    <td>rcb, ref, opts</td>
+                    <td>none</td>
+                    <td>Enable reporting for an RCB, install report handler, and write RCB settings.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">get_dataset_data()</td>
+                    <td>none</td>
+                    <td>dict</td>
+                    <td>Return cached dataset model/spec built during RCB setup.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card rounded-4 mb-3">
+          <div class="card-header fw-semibold">Service dispatch names (used via service_call)</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:26%">Service name</th>
+                    <th style="width:28%">Handler</th>
+                    <th style="width:24%">Parameters</th>
+                    <th>Returns</th>
+                  </tr>
+                </thead>
+                <tbody class="small2">
+                  <tr><td class="mono">GetServerDirectory</td><td class="mono">_get_server_directory</td><td>None</td><td>Logical device list</td></tr>
+                  <tr><td class="mono">GetLogicalDeviceDirectory</td><td class="mono">_get_logical_device_directory</td><td>domain</td><td>Variable list (filtered)</td></tr>
+                  <tr><td class="mono">GetLogicalNodeDirectory</td><td class="mono">_get_logical_node_directory</td><td>ref</td><td>LN spec dict</td></tr>
+                  <tr><td class="mono">GetDataSets</td><td class="mono">_get_data_sets</td><td>domain</td><td>Dataset names</td></tr>
+                  <tr><td class="mono">GetDataSetDirectory</td><td class="mono">_get_data_set_directory</td><td>ref</td><td>FCDA entries</td></tr>
+                  <tr><td class="mono">GetDataValues</td><td class="mono">_get_data_values</td><td>ref</td><td>Decoded values</td></tr>
+                  <tr><td class="mono">SetDataValues</td><td class="mono">_set_data_values</td><td>{"ref","value","type"}</td><td>Write result/None</td></tr>
+                  <tr><td class="mono">Command</td><td class="mono">_command</td><td>{"ref","ctlval","type?"}</td><td>Write result/None</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card rounded-4">
+          <div class="card-header fw-semibold">Internal APIs (runs inside the library)</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:30%">Method</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody class="small2">
+                  <tr><td class="mono">_connection_callback</td><td>Update connection status, invoke external callback, trigger reconnect handling.</td></tr>
+                  <tr><td class="mono">_reconnect</td><td>Exponential backoff reconnect loop in background.</td></tr>
+                  <tr><td class="mono">_destroy_connection</td><td>Clear caches and destroy connection handles.</td></tr>
+                  <tr><td class="mono">_ll_to_list</td><td>Convert libiec61850 linked list to Python list.</td></tr>
+                  <tr><td class="mono">_variable_spec_to_dict</td><td>Convert MMS variable specification tree into nested Python dict.</td></tr>
+                  <tr><td class="mono">_get_mms_values</td><td>Decode MMS values (structures/arrays/primitives) into Python types/dicts.</td></tr>
+                  <tr><td class="mono">map_values_to_spec</td><td>Align decoded values with spec keys (helper).</td></tr>
+                  <tr><td class="mono">_report_callback_function</td><td>Decode report payload, update cache, invoke external report callback.</td></tr>
+                  <tr><td class="mono">_prepare_command_strcuture</td><td>Build MMS control command structure (origin/test/check/time etc.).</td></tr>
+                  <tr><td class="mono">_command</td><td>Write control command object; includes cancel pathway based on reference.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- APPLICATION TAB -->
+      <div class="tab-pane fade" id="application" role="tabpanel">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <h2 class="h4 mb-0">IEC61850ClientApplication</h2>
+          <span class="badge badge-soft rounded-pill px-3 py-2">Multi-device orchestration</span>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Purpose</div>
+              <div class="card-body small2 muted">
+                <ul class="mb-0">
+                  <li>Load device configuration from <span class="mono">config.json</span>.</li>
+                  <li>Create and own one library client per host.</li>
+                  <li>Centralize caches: reported data, dataset models, connection status.</li>
+                  <li>Auto-enable RCBs on connect and reconnect.</li>
+                  <li>Offer a simple app-facing API for service calls and commands.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Class definition</div>
+              <div class="card-body small2">
+                <div class="muted mb-2">Class: <span class="mono">Iec61850ClientApplication</span></div>
+                <div class="p-3 rounded-4 pill">
+                  <div class="fw-semibold mb-2">Constructor</div>
+                  <div class="mono">__init__(config_path="config.json")</div>
+                  <div class="muted mt-2">
+                    Loads configuration, creates clients, registers internal callbacks, and initializes per-host caches.
+                  </div>
+                </div>
+                <div class="muted mt-3">
+                  Operational note: clients are created immediately; connections are started later via <span class="mono">connect()</span> or <span class="mono">start_client()</span>.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card rounded-4 mb-3">
+          <div class="card-header fw-semibold">Public APIs</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:22%">Method</th>
+                    <th style="width:18%">Inputs</th>
+                    <th style="width:16%">Output</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody class="small2">
+                  <tr><td class="mono">connect(host_names=None)</td><td>host list (optional)</td><td>none</td><td>Start daemon threads to connect to selected/all hosts; on success enable RCBs.</td></tr>
+                  <tr><td class="mono">start_client(host)</td><td>host</td><td>none</td><td>Create connection and start async connect for one host.</td></tr>
+                  <tr><td class="mono">stop_client(host)</td><td>host</td><td>none</td><td>Stop one client and mark connection state as stopped.</td></tr>
+                  <tr><td class="mono">set_report_callback(cb)</td><td>cb(host, reported_data)</td><td>none</td><td>External hook for report updates.</td></tr>
+                  <tr><td class="mono">set_connection_callback(cb)</td><td>cb(host, state, timestamp, source)</td><td>none</td><td>External hook for connection changes (excluding reconnect transitions).</td></tr>
+                  <tr><td class="mono">get_reported_data()</td><td>none</td><td>dict</td><td>Return cached reported data per host.</td></tr>
+                  <tr><td class="mono">get_dataset_data()</td><td>none</td><td>dict</td><td>Return cached dataset models per host.</td></tr>
+                  <tr><td class="mono">get_connection_status()</td><td>none</td><td>dict</td><td>Return per-host connection status, timestamp, and source.</td></tr>
+                  <tr><td class="mono">service_call(host, name, parameters)</td><td>host, service</td><td>any</td><td>Dispatch a named service to the underlying library client.</td></tr>
+                  <tr><td class="mono">send_command(host, object_ref, ctlVal=None, test=False, check=False)</td><td>host, command args</td><td>any</td><td>Send control command via underlying client.</td></tr>
+                  <tr><td class="mono">get_and_rcb(host, rcbs)</td><td>host, rcb config</td><td>none</td><td>Read and enable RCBs; refresh cached dataset model for that host.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card rounded-4">
+          <div class="card-header fw-semibold">Internal APIs (runs inside the application)</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:28%">Method</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody class="small2">
+                  <tr>
+                    <td class="mono">_on_connection_changed(host, state, reconnecting)</td>
+                    <td>Update status cache; clear reported data on disconnect; on connect, auto-enable RCBs; call external callback when not reconnecting.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">_on_report(host, reported_data)</td>
+                    <td>Update reported-data cache for the host and invoke external callback if registered.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SERVER TAB -->
+      <div class="tab-pane fade" id="server" role="tabpanel">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <h2 class="h4 mb-0">APIIntegrationServer</h2>
+          <span class="badge badge-soft rounded-pill px-3 py-2">FastAPI wrapper</span>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Purpose</div>
+              <div class="card-body small2 muted">
+                <ul class="mb-0">
+                  <li>Expose orchestration layer via REST and WebSockets.</li>
+                  <li>Broadcast report and status changes to multiple subscribers.</li>
+                  <li>Provide a generic service endpoint and a command endpoint.</li>
+                  <li>Provide simple start/stop host management.</li>
+                  <li>Offer command logging stream (<span class="mono">/log_command</span>) for UI/audit/telemetry.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Class definition</div>
+              <div class="card-body small2">
+                <div class="muted mb-2">Class: <span class="mono">FastApiIntegrationServer</span></div>
+                <div class="p-3 rounded-4 pill">
+                  <div class="fw-semibold mb-2">Constructor</div>
+                  <div class="mono">__init__()</div>
+                  <div class="muted mt-2">
+                    Builds FastAPI app (lifespan), sets CORS, instantiates the application singleton, wires callbacks, and registers routes.
+                  </div>
+                </div>
+                <div class="muted mt-3">
+                  Startup behavior: on server lifespan startup, it connects to all configured hosts automatically.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card rounded-4 mb-3">
+          <div class="card-header fw-semibold">Public APIs (external endpoints)</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:22%">Endpoint</th>
+                    <th style="width:12%">Type</th>
+                    <th style="width:28%">Inputs</th>
+                    <th style="width:18%">Output</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody class="small2">
+                  <tr>
+                    <td class="mono">/reported_data</td>
+                    <td><span class="badge badge-soft rounded-pill">WS</span></td>
+                    <td>Connect</td>
+                    <td>JSON stream</td>
+                    <td>Initial snapshot of reported data for all hosts, then continuous updates.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">/connection_status</td>
+                    <td><span class="badge badge-soft rounded-pill">WS</span></td>
+                    <td>Connect</td>
+                    <td>JSON stream</td>
+                    <td>Initial snapshot of connection status for all hosts, then status updates.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">/log_command</td>
+                    <td><span class="badge badge-soft rounded-pill">WS</span></td>
+                    <td>Connect</td>
+                    <td>JSON stream</td>
+                    <td>Streams service-call logs emitted by <span class="mono">/service</span> calls.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">/service</td>
+                    <td><span class="badge badge-soft rounded-pill">GET</span></td>
+                    <td><span class="mono">host</span>, <span class="mono">service_call</span> (JSON string)</td>
+                    <td><span class="mono">{host, result}</span></td>
+                    <td>Generic service dispatcher into the application. Also emits a command log entry.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">/dataset</td>
+                    <td><span class="badge badge-soft rounded-pill">GET</span></td>
+                    <td>none</td>
+                    <td><span class="mono">{dataset: ...}</span></td>
+                    <td>Returns cached dataset model/spec data.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">/command</td>
+                    <td><span class="badge badge-soft rounded-pill">POST</span></td>
+                    <td><span class="mono">host</span> + JSON payload</td>
+                    <td><span class="mono">{host, status}</span></td>
+                    <td>Sends a control command to the target host.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">/manage</td>
+                    <td><span class="badge badge-soft rounded-pill">POST</span></td>
+                    <td><span class="mono">host</span>, <span class="mono">action</span>=start|stop</td>
+                    <td><span class="mono">{host, status}</span></td>
+                    <td>Start/stop a host client from the server side.</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">/connections_status</td>
+                    <td><span class="badge badge-soft rounded-pill">GET</span></td>
+                    <td>none</td>
+                    <td>dict</td>
+                    <td>Returns current connection status dict for all hosts.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card rounded-4">
+          <div class="card-header fw-semibold">Internal APIs (server runtime)</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:28%">Method</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody class="small2">
+                  <tr><td class="mono">_lifespan(app)</td><td>Capture server event loop and start application connect on startup.</td></tr>
+                  <tr><td class="mono">_handle_report(host, reported_data)</td><td>Bridge application report callback into async WS broadcast using thread-safe scheduling.</td></tr>
+                  <tr><td class="mono">_handle_connection(host, state, timestamp, source)</td><td>Bridge connection callback into status broadcast; clear reported stream on disconnect.</td></tr>
+                  <tr><td class="mono">_broadcast(clients, message)</td><td>Send JSON to all connected websockets and remove dead subscribers.</td></tr>
+                  <tr><td class="mono">websocket_report(ws)</td><td>WS handler: seed initial snapshot then keep alive while client sends text.</td></tr>
+                  <tr><td class="mono">websocket_status(ws)</td><td>WS handler: seed initial snapshot then keep alive while client sends text.</td></tr>
+                  <tr><td class="mono">websocket_log_command(ws)</td><td>WS handler: stream command logs; keep alive while client sends text.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <hr class="hr my-4">
+
+        <div class="callout small2">
+          <div class="fw-semibold mb-1">Operational notes</div>
+          <ul class="mb-0">
+            <li><span class="badge badge-soft-danger rounded-pill">CORS open</span> is fine in a lab. In anything else, it’s an invitation.</li>
+            <li><span class="badge badge-soft-warn rounded-pill">/service JSON in query</span> works but is brittle (escaping breaks clients easily).</li>
+            <li>WebSocket handlers expect clients to send some text periodically to keep the receive loop alive.</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- USAGE TAB -->
+      <div class="tab-pane fade" id="usage" role="tabpanel">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <h2 class="h4 mb-0">Usage</h2>
+          <span class="badge badge-soft rounded-pill px-3 py-2">Quick reference</span>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Start the server</div>
+              <div class="card-body small2 muted">
+                <ol class="mb-0">
+                  <li>Update <span class="mono">config.json</span> with hosts, IP, port, and RCB definitions.</li>
+                  <li>Run the startup script (Uvicorn entry).</li>
+                  <li>Wait for hosts to connect (status stream will show it).</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Consume data (WS)</div>
+              <div class="card-body small2 muted">
+                <ul class="mb-0">
+                  <li>Connect to <span class="mono">/reported_data</span> for live values.</li>
+                  <li>Connect to <span class="mono">/connection_status</span> for state changes.</li>
+                  <li>Connect to <span class="mono">/log_command</span> to observe service calls.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Read dataset model</div>
+              <div class="card-body small2 muted">
+                <div>REST: <span class="mono">GET /dataset</span></div>
+                <div class="muted mt-2">Returns cached dataset structures discovered during RCB setup.</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Execute control command</div>
+              <div class="card-body small2 muted">
+                <div>REST: <span class="mono">POST /command?host=&lt;host&gt;</span></div>
+                <div class="muted mt-2">Body example:</div>
+                <pre class="mb-0 p-3 rounded-4 pill text-light"><code class="code">{
+  "object_ref": "LD0/CSWI1.Pos",
+  "ctlVal": 1,
+  "test": false,
+  "check": false
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="hr my-4">
+
+        <div class="card rounded-4">
+          <div class="card-header fw-semibold">Responsibility boundaries</div>
+          <div class="card-body small2 muted">
+            <ul class="mb-0">
+              <li><span class="mono">IEC61850ClientLibrary</span>: protocol correctness, decoding, control writes.</li>
+              <li><span class="mono">IEC61850ClientApplication</span>: multi-host lifecycle, caching, config-driven setup.</li>
+              <li><span class="mono">APIIntegrationServer</span>: external interface, WS fan-out, REST routing, process lifecycle.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="mt-4 muted small2">
+      Document: IEC61850 Client RESTFul server driver. Generated for internal documentation and integration reference.
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

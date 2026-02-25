@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Event List Interaction Application</title>
+
+  <!-- Bootstrap core -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Unified theme (same as driver + SLD docs) -->
+  <style>
+    :root{
+      --bg: #0b0f14;
+      --panel: #0f1720;
+      --panel-2: rgba(255,255,255,.02);
+      --border: #1f2a37;
+      --text: #e5e7eb;
+      --text-2: #cbd5e1;
+      --muted: #9aa4b2;
+      --muted-2: #94a3b8;
+      --accent: rgba(13,110,253,.35);
+      --warn-border: rgba(255,193,7,.35);
+      --warn-bg: rgba(255,193,7,.10);
+    }
+
+    body { background: var(--bg); color: var(--text); }
+    a { text-decoration: none; color: inherit; }
+
+    .mono, .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+    }
+
+    .small2 { font-size: .92rem; }
+
+    .muted { color: var(--muted) !important; }
+    h1, h2, h3, h4, h5, h6 { color: #f8fafc; }
+    .lead { color: var(--text-2); }
+
+    .bg-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    .pill {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: .75rem;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+    }
+
+    .card-body { color: var(--text-2); }
+
+    .card-header{
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: #f1f5f9 !important;
+      font-weight: 600;
+      border-top-left-radius: 1rem;
+      border-top-right-radius: 1rem;
+    }
+
+    .nav-tabs { border-bottom: 1px solid var(--border); }
+
+    .nav-tabs .nav-link {
+      color: var(--muted-2);
+      border: 0;
+    }
+
+    .nav-tabs .nav-link:hover { color: var(--text); }
+
+    .nav-tabs .nav-link.active{
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-bottom-color: var(--panel);
+      border-top-left-radius: .75rem;
+      border-top-right-radius: .75rem;
+    }
+
+    .tab-content{
+      border: 1px solid var(--border);
+      border-top: 0;
+      border-radius: 0 0 .75rem .75rem;
+      background: var(--panel);
+    }
+
+    .table { color: var(--text); }
+
+    .table thead th{
+      color: var(--text-2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table td, .table th { border-color: var(--border); }
+
+    .table tbody tr:hover {
+      background: rgba(255,255,255,.03);
+    }
+
+    .hr { border-top: 1px solid var(--border); opacity: 1; }
+
+    .badge-soft {
+      background: rgba(13,110,253,.15);
+      color: #9ec5fe;
+      border: 1px solid var(--accent);
+    }
+
+    .callout{
+      border: 1px solid var(--warn-border);
+      background: var(--warn-bg);
+      border-radius: .75rem;
+      padding: 1rem;
+      color: var(--text);
+    }
+
+    pre{
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--border);
+      border-radius: .75rem;
+      color: var(--text);
+    }
+		.navbar {
+	  background: var(--panel) !important;
+	  border-bottom: 1px solid var(--border) !important;
+	}
+
+	.navbar-brand {
+	  color: var(--text) !important;
+	}
+
+	.navbar-brand:hover {
+	  color: #f8fafc !important;
+	}
+
+	.navbar .nav-link {
+	  color: var(--muted-2) !important;
+	}
+
+	.navbar .nav-link:hover {
+	  color: var(--text) !important;
+	}
+
+	.navbar .nav-link.active {
+	  color: var(--text) !important;
+	  font-weight: 600;
+	}
+	.navbar-toggler {
+	  border-color: var(--border);
+	}
+
+	.navbar-toggler-icon {
+	  filter: invert(1) brightness(1.5);
+	}
+  </style>
+</head>
+<body class="text-light">
+<nav class="navbar navbar-expand-lg bg-panel border-bottom mb-4">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="index.html">TestBed SCADA</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMain">
+      <ul class="navbar-nav ms-auto">
+
+        <li class="nav-item">
+          <a class="nav-link" href="index.html">Home</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="IEC61850_Client_RESTFul_Server_Driver.html">
+            IEC 61850
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="SLD_Interaction_Application_FULL.html">
+            SLD
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="Event_List_Interaction_Application_FULL.html">
+            Event
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="IEC104_Slave_Integration_FULL_EXTENDED.html">
+            IEC 104
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/YOUR_USERNAME/TestBedScada">
+            Project
+          </a>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+</nav>
+  <div class="container py-4 py-md-5">
+
+    <div class="p-4 p-md-5 rounded-4 bg-panel mb-4">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <h1 class="mb-2">Event List Interaction Application</h1>
+          <div class="muted small2">
+            FastAPI event list UI that consumes backend reported data via WebSocket, generates event records, persists them to MongoDB, and streams live events to the browser.
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge badge-soft rounded-pill px-3 py-2">FastAPI UI Server</span>
+          <span class="badge badge-soft rounded-pill px-3 py-2">Backend WS Consumer</span>
+          <span class="badge badge-soft rounded-pill px-3 py-2">MongoDB Persistence</span>
+          <span class="badge badge-soft rounded-pill px-3 py-2">Excel-driven Event Filter</span>
+          <span class="badge badge-soft rounded-pill px-3 py-2">Live Broadcast</span>
+        </div>
+      </div>
+
+      <hr class="hr my-4">
+
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="muted">
+            Documentation for <span class="mono">Event_list.py</span> and its bundle files.
+            This is intentionally scoped to this application’s usage of the backend driver and this Excel sheet.
+          </div>
+          <div class="mt-2 muted">
+            Context guardrail: this is <b>not</b> a generic event engine. It assumes the backend driver’s <span class="mono">/reported_data</span> message shape and the presence of <span class="mono">Description</span> + <span class="mono">Event_list</span> in the Excel mapping.
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="p-3 rounded-4 pill">
+            <div class="fw-semibold mb-2">External dependencies</div>
+            <div class="small2 muted">
+              <div>Backend WS: <span class="mono">ws://localhost:8000/reported_data</span></div>
+              <div>MongoDB: <span class="mono">mongodb://localhost:27017</span></div>
+              <div>Collection: <span class="mono">TestBedScada.Event_list</span></div>
+              <div>UI port: <span class="mono">0.0.0.0:8012</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ul class="nav nav-tabs" id="tabs" role="tablist">
+      <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#architecture" type="button" role="tab">Architecture</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#excel" type="button" role="tab">Excel mapping</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#backend" type="button" role="tab">Backend dependency</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#uiapi" type="button" role="tab">UI server APIs</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#schemas" type="button" role="tab">Schemas</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#flow" type="button" role="tab">Runtime flow</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#classref" type="button" role="tab">Class & methods</button></li>
+    </ul>
+
+    <div class="tab-content p-3 p-md-4" id="tabsContent">
+
+      <div class="tab-pane fade show active" id="overview" role="tabpanel">
+        <div class="row g-3">
+          <div class="col-lg-7">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">What this application does</div>
+              <div class="card-body small2 muted">
+                <ul class="mb-0">
+                  <li>Runs a FastAPI UI server for viewing SCADA/IEC events.</li>
+                  <li>Subscribes to backend <span class="mono">/reported_data</span> WebSocket feed.</li>
+                  <li>Detects changes per <span class="mono">DataAttribute</span> and builds event records.</li>
+                  <li>Persists selected events into MongoDB for history.</li>
+                  <li>Broadcasts each new event to connected UI websocket clients.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-5">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Bundle files used</div>
+              <div class="card-body small2 muted">
+                <ul class="mb-0">
+                  <li><span class="mono">Event_list.py</span> (this app)</li>
+                  <li><span class="mono">templates/event_list.html</span> (UI template)</li>
+                  <li><span class="mono">SS1_HMI_dataset.xlsx</span> (event mapping)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card rounded-4 mt-3">
+          <div class="card-header fw-semibold">“Event” definition (in this context)</div>
+          <div class="card-body small2 muted">
+            A backend value change becomes an “event” if there is a matching Excel row where <span class="mono">Description</span> is present,
+            and the row’s <span class="mono">Event_list</span> evaluates to True. Everything else is ignored.
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="architecture" role="tabpanel">
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">High-level components</div>
+              <div class="card-body small2 muted">
+                <ul class="mb-0">
+                  <li>Backend WS consumer (<span class="mono">websockets.connect</span>).</li>
+                  <li>Excel mapping filter (pandas).</li>
+                  <li>MongoDB persistence (<span class="mono">pymongo</span>).</li>
+                  <li>UI server endpoints + UI websocket broadcast (FastAPI).</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Threading / async model</div>
+              <div class="card-body small2 muted">
+                The FastAPI app starts a background asyncio task via lifespan:
+                <span class="mono">subscribe_and_monitor()</span>. That task blocks on backend WS receives and emits DB writes + broadcasts.
+                UI websocket connections are maintained independently.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="excel" role="tabpanel">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <h2 class="h4 mb-0">Excel mapping (SS1_HMI_dataset.xlsx)</h2>
+          <span class="badge badge-soft rounded-pill px-3 py-2">1461 rows</span>
+        </div>
+
+        <div class="card rounded-4 mb-3">
+          <div class="card-header fw-semibold">How the sheet is used here</div>
+          <div class="card-body small2 muted">
+            The application loads the sheet, casts <span class="mono">DataAttribute</span> to string, and keeps only rows where <span class="mono">Description</span> is present.
+            During runtime, each flattened backend key is matched against <span class="mono">DataAttribute</span> to attach substation/bay/device/description metadata.
+          </div>
+        </div>
+
+        <div class="card rounded-4">
+          <div class="card-header fw-semibold">Columns and usage (context-only)</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead><tr><th>Column</th><th>Used?</th><th>Usage in this application</th></tr></thead>
+                <tbody class="small2"><tr><td><span class='mono'>IED</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr>
+<tr><td><span class='mono'>DataSet</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr>
+<tr><td><span class='mono'>DataObject</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr>
+<tr><td><span class='mono'>DataAttribute</span></td><td>Used</td><td>Matched against flattened backend update keys.</td></tr>
+<tr><td><span class='mono'>Description</span></td><td>Used</td><td>Rows with Description define what becomes an event record.</td></tr>
+<tr><td><span class='mono'>Substation</span></td><td>Used</td><td>Copied into the stored event record for grouping/filtering.</td></tr>
+<tr><td><span class='mono'>Bay</span></td><td>Used</td><td>Copied into the stored event record for grouping/filtering.</td></tr>
+<tr><td><span class='mono'>Device</span></td><td>Used</td><td>Copied into the stored event record for grouping/filtering.</td></tr>
+<tr><td><span class='mono'>Event_list</span></td><td>Used</td><td>Gate: if True, record is persisted and broadcast as an event.</td></tr>
+<tr><td><span class='mono'>Value_mapping</span></td><td>Read (lightly)</td><td>Read but not applied (mapping variable is currently unused/commented).</td></tr>
+<tr><td><span class='mono'>SLD_Tag</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr>
+<tr><td><span class='mono'>SLD_Type</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr>
+<tr><td><span class='mono'>Scaling_factor</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr>
+<tr><td><span class='mono'>Precision</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr>
+<tr><td><span class='mono'>command</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr>
+<tr><td><span class='mono'>IEC104_IOA</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr>
+<tr><td><span class='mono'>IEC104_Type</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr>
+<tr><td><span class='mono'>IEC104_IOA_CMD</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr>
+<tr><td><span class='mono'>Slave_id</span></td><td>Not used</td><td>Present in sheet but not referenced by this .py in this context.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="backend" role="tabpanel">
+        <div class="card rounded-4 mb-3">
+          <div class="card-header fw-semibold">Backend dependency</div>
+          <div class="card-body small2 muted">
+            This app consumes the backend’s live report stream only:
+            <div class="mt-2"><span class="mono">ws://localhost:8000/reported_data</span></div>
+            It assumes the backend provides per-IED and per-RCB nested values with <span class="mono">q</span> (quality) and <span class="mono">t</span> (timestamp in ms) inside each nested payload.
+          </div>
+        </div>
+
+        <div class="card rounded-4">
+          <div class="card-header fw-semibold">Backend message shape (expected)</div>
+          <div class="card-body small2 muted">
+            <pre class="mb-0 p-3 rounded-4 pill text-light"><code class="code">{
+  "&lt;IED&gt;": {
+    "&lt;RCB_NAME&gt;": {
+      "&lt;base_da&gt;": {
+        "stVal": 1,
+        "q": "...",
+        "t": 1730000000000,
+        "...": "nested MMS-decoded structure"
+      }
+    }
+  }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="uiapi" role="tabpanel">
+        <div class="card rounded-4 mb-3">
+          <div class="card-header fw-semibold">UI server APIs</div>
+          <div class="card-body small2 muted">
+            Browser clients use these endpoints to load history and receive live updates.
+          </div>
+        </div>
+
+        <div class="card rounded-4">
+          <div class="card-header fw-semibold">Endpoints</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead><tr><th>Path</th><th>Type</th><th>Output</th><th>Description</th></tr></thead>
+                <tbody class="small2"><tr><td><span class='mono'>/</span></td><td>GET</td><td>HTML</td><td>Renders the event list page (Jinja template).</td></tr>
+<tr><td><span class='mono'>/api/events</span></td><td>GET</td><td>JSON</td><td>Returns the latest 100 persisted event records where history=True, sorted by timestamp desc.</td></tr>
+<tr><td><span class='mono'>/ws</span></td><td>WebSocket</td><td>JSON push</td><td>Browser clients connect to receive real-time pushed event records.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="schemas" role="tabpanel">
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">MongoDB record schema</div>
+              <div class="card-body small2 muted">
+                Records are inserted into <span class="mono">TestBedScada.Event_list</span> with <span class="mono">_id</span> derived from attribute + timestamp.
+                <pre class="mb-0 p-3 rounded-4 pill text-light"><code class="code">{
+  "_id": "&lt;DataAttribute&gt;_&lt;formatted timestamp&gt;",
+  "substation": "&lt;Substation&gt;",
+  "bay": "&lt;Bay&gt;",
+  "device": "&lt;Device&gt;",
+  "attribute": "&lt;flattened DataAttribute key&gt;",
+  "value": "&lt;raw value&gt;",
+  "description": "&lt;Description&gt;",
+  "quality": "&lt;nested_val.q or N/A&gt;",
+  "timestamp": "&lt;YYYY-MM-DD HH:MM:SS.mmm&gt;",
+  "history": true
+}</code></pre>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card rounded-4 h-100">
+              <div class="card-header fw-semibold">Live broadcast payload</div>
+              <div class="card-body small2 muted">
+                Each inserted Mongo record is broadcast as JSON to UI websocket clients (<span class="mono">/ws</span>).
+                The payload is identical to the stored record (same keys).
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card rounded-4 mt-3">
+          <div class="card-header fw-semibold">Timestamp formatting</div>
+          <div class="card-body small2 muted">
+            The app converts backend <span class="mono">t</span> (ms epoch) to: <span class="mono">YYYY-MM-DD HH:MM:SS.mmm</span>. If conversion fails, timestamp becomes <span class="mono">Invalid</span>.
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="flow" role="tabpanel">
+        
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card rounded-4 h-100">
+      <div class="card-header fw-semibold">Live event generation flow</div>
+      <div class="card-body small2 muted">
+        <ol class="mb-0">
+          <li>Startup creates a background task: <span class="mono">subscribe_and_monitor()</span>.</li>
+          <li>Task connects to backend WS: <span class="mono">/reported_data</span>.</li>
+          <li>Each backend message is decoded and flattened into key/value pairs.</li>
+          <li>Each flattened key is matched against Excel <span class="mono">DataAttribute</span> where <span class="mono">Description</span> is present.</li>
+          <li>On value change, a record is created, gated by Excel <span class="mono">Event_list</span>.</li>
+          <li>Record is inserted into MongoDB and broadcast to UI websocket clients.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card rounded-4 h-100">
+      <div class="card-header fw-semibold">UI consumption flow</div>
+      <div class="card-body small2 muted">
+        <ol class="mb-0">
+          <li>Browser loads <span class="mono">GET /</span> (template).</li>
+          <li>Browser opens <span class="mono">WS /ws</span> for live pushes.</li>
+          <li>Browser may call <span class="mono">GET /api/events</span> to load recent history.</li>
+          <li>Each pushed record is rendered as an event row/card in the UI.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+        <div class="card rounded-4 mt-3">
+          <div class="card-header fw-semibold">Duplicate handling</div>
+          <div class="card-body small2 muted">
+            Each event record uses <span class="mono">_id = DataAttribute + "_" + timestamp</span>. If Mongo rejects insert due to duplicate key,
+            the app silently ignores it (exception swallowed) and continues.
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="classref" role="tabpanel">
+        <div class="card rounded-4 mb-3">
+          <div class="card-header fw-semibold">Class: SCADAEventServer</div>
+          <div class="card-body small2 muted">
+            Owns backend subscription, Excel mapping filter, Mongo persistence, and UI endpoints for event viewing.
+          </div>
+        </div>
+
+        <div class="card rounded-4">
+          <div class="card-header fw-semibold">Method reference</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead><tr><th>Method signature</th><th>Visibility</th><th>Sync/Async</th><th>Purpose</th></tr></thead>
+                <tbody class="small2"><tr><td><span class='mono'>def __init__(self)</span></td><td>Internal</td><td>sync</td><td>Initializes Mongo connection and collection, loads Excel mapping (rows with Description), configures FastAPI routes and lifespan task.</td></tr>
+<tr><td><span class='mono'>def flatten_nested_dict(self, d, parent_key)</span></td><td>Public</td><td>sync</td><td>Flattens nested values into dotted keys prefixed with base_da, enabling Excel DataAttribute matching.</td></tr>
+<tr><td><span class='mono'>def format_timestamp(self, ts_ms)</span></td><td>Public</td><td>sync</td><td>Converts millisecond epoch (t) to human-readable timestamp string.</td></tr>
+<tr><td><span class='mono'>async def event_list_page(self, request)</span></td><td>Public</td><td>async</td><td>Renders the HTML page via Jinja template.</td></tr>
+<tr><td><span class='mono'>async def get_events_api(self)</span></td><td>Public</td><td>async</td><td>Returns persisted historical events from MongoDB as JSON.</td></tr>
+<tr><td><span class='mono'>async def websocket_endpoint(self, websocket)</span></td><td>Public</td><td>async</td><td>Accepts UI websocket clients and keeps connection open; clients receive broadcasts.</td></tr>
+<tr><td><span class='mono'>async def broadcast(self, message)</span></td><td>Public</td><td>async</td><td>Sends a JSON event record to all connected websocket clients.</td></tr>
+<tr><td><span class='mono'>async def subscribe_and_monitor(self)</span></td><td>Public</td><td>async</td><td>Connects to backend reported_data WS, detects changes, builds event records, writes to Mongo, and broadcasts live.</td></tr>
+<tr><td><span class='mono'>def run(self)</span></td><td>Public</td><td>sync</td><td>Runs uvicorn on 0.0.0.0:8012.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="mt-4 muted small2">
+      Document: Event List Interaction Application. Generated from supplied bundle. Scoped to this application and backend driver interactions.
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
