@@ -1,1 +1,322 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TestBed SCADA & Gateway – R&D and Security Evaluation</title>
+
+  <!-- Bootstrap core -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Canonical unified theme -->
+  <style>
+    :root{
+      --bg: #0b0f14;
+      --panel: #0f1720;
+      --panel-2: rgba(255,255,255,.02);
+      --border: #1f2a37;
+      --text: #e5e7eb;
+      --text-2: #cbd5e1;
+      --muted: #9aa4b2;
+      --muted-2: #94a3b8;
+      --accent: rgba(13,110,253,.35);
+      --warn-border: rgba(255,193,7,.35);
+      --warn-bg: rgba(255,193,7,.10);
+    }
+
+    body { background: var(--bg); color: var(--text); }
+    a { text-decoration: none; color: inherit; }
+	
+	/* Navbar color harmonization */
+
+	.navbar {
+	  background: var(--panel) !important;
+	  border-bottom: 1px solid var(--border) !important;
+	}
+
+	.navbar-brand {
+	  color: var(--text) !important;
+	}
+
+	.navbar-brand:hover {
+	  color: #f8fafc !important;
+	}
+
+	.navbar .nav-link {
+	  color: var(--muted-2) !important;
+	}
+
+	.navbar .nav-link:hover {
+	  color: var(--text) !important;
+	}
+
+	.navbar .nav-link.active {
+	  color: var(--text) !important;
+	  font-weight: 600;
+	}
+	.navbar-toggler {
+	  border-color: var(--border);
+	}
+
+	.navbar-toggler-icon {
+	  filter: invert(1) brightness(1.5);
+	}
+
+    .mono, .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+    }
+
+    .small2 { font-size: .92rem; }
+
+    .muted { color: var(--muted) !important; }
+    h1, h2, h3, h4, h5, h6 { color: #f8fafc; }
+    .lead { color: var(--text-2); }
+
+    .bg-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    .pill {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: .75rem;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+    }
+
+    .card-body { color: var(--text-2); }
+
+    .card-header{
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: #f1f5f9 !important;
+      font-weight: 600;
+      border-top-left-radius: 1rem;
+      border-top-right-radius: 1rem;
+    }
+
+    .nav-tabs { border-bottom: 1px solid var(--border); }
+
+    .nav-tabs .nav-link {
+      color: var(--muted-2);
+      border: 0;
+    }
+
+    .nav-tabs .nav-link:hover { color: var(--text); }
+
+    .nav-tabs .nav-link.active{
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-bottom-color: var(--panel);
+      border-top-left-radius: .75rem;
+      border-top-right-radius: .75rem;
+    }
+
+    .tab-content{
+      border: 1px solid var(--border);
+      border-top: 0;
+      border-radius: 0 0 .75rem .75rem;
+      background: var(--panel);
+    }
+
+    .table {
+      color: var(--text);
+      background: transparent;
+    }
+
+    .table thead th{
+      color: var(--text-2);
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+    }
+
+    .table td, .table th {
+      border-color: var(--border);
+      vertical-align: middle;
+    }
+
+    .table tbody tr:hover {
+      background: rgba(255,255,255,.03);
+    }
+
+    .hr { border-top: 1px solid var(--border); opacity: 1; }
+
+    .badge-soft {
+      background: rgba(13,110,253,.15);
+      color: #9ec5fe;
+      border: 1px solid var(--accent);
+    }
+
+    .callout{
+      border: 1px solid var(--warn-border);
+      background: var(--warn-bg);
+      border-radius: .75rem;
+      padding: 1rem;
+      color: var(--text);
+    }
+
+    pre{
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--border);
+      border-radius: .75rem;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg bg-panel border-bottom mb-4">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="index.html">TestBed SCADA</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMain">
+      <ul class="navbar-nav ms-auto">
+
+        <li class="nav-item">
+          <a class="nav-link" href="index.html">Home</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="IEC61850_Client_RESTFul_Server_Driver.html">
+            IEC 61850
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="SLD_Interaction_Application_FULL.html">
+            SLD
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="Event_List_Interaction_Application_FULL.html">
+            Event
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="IEC104_Slave_Integration_FULL_EXTENDED.html">
+            IEC 104
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/YOUR_USERNAME/TestBedScada">
+            Project
+          </a>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-5">
+
+<div class="hero p-5 mb-4">
+<h1 class="mb-3">TestBed SCADA & Gateway</h1>
+<div class="muted">
+A modular test‑bed environment built for research, experimentation, and security evaluation of modern industrial communication and control systems.
+</div>
+<div class="mt-3 muted">
+The stack enables controlled validation of telemetry ingestion, control interactions, and protocol bridging under both normal and adversarial scenarios.
+</div>
+</div>
+
+<div class="row g-4">
+
+<div class="col-md-6">
+<a href="IEC61850_Client_RESTFul_Server_Driver.html">
+<div class="card h-100">
+<div class="card-header fw-semibold">IEC 61850 RESTful Driver</div>
+<div class="card-body">
+<div class="muted small">
+Multi‑device orchestration layer exposing protocol capabilities through REST and WebSocket interfaces.
+</div>
+<div class="mt-3">
+<span class="badge badge-soft">Telemetry</span>
+<span class="badge badge-soft">Command</span>
+<span class="badge badge-soft">Streaming</span>
+</div>
+</div>
+</div>
+</a>
+</div>
+
+<div class="col-md-6">
+<a href="SLD_Interaction_Application_FULL.html">
+<div class="card h-100">
+<div class="card-header fw-semibold">SLD Interaction Application</div>
+<div class="card-body">
+<div class="muted small">
+Dynamic visualization layer for system monitoring and control interactions driven by backend data streams.
+</div>
+<div class="mt-3">
+<span class="badge badge-soft">Visualization</span>
+<span class="badge badge-soft">SVG</span>
+<span class="badge badge-soft">Real‑time</span>
+</div>
+</div>
+</div>
+</a>
+</div>
+
+<div class="col-md-6">
+<a href="Event_List_Interaction_Application_FULL.html">
+<div class="card h-100">
+<div class="card-header fw-semibold">Event List Application</div>
+<div class="card-body">
+<div class="muted small">
+Structured event generation and persistence framework supporting analytics, auditing, and monitoring workflows.
+</div>
+<div class="mt-3">
+<span class="badge badge-soft">Events</span>
+<span class="badge badge-soft">History</span>
+<span class="badge badge-soft">Streaming</span>
+</div>
+</div>
+</div>
+</a>
+</div>
+
+<div class="col-md-6">
+<a href="IEC104_Slave_Integration_FULL.html">
+<div class="card h-100">
+<div class="card-header fw-semibold">IEC 60870‑5‑104 Slave Gateway</div>
+<div class="card-body">
+<div class="muted small">
+Protocol bridge exposing backend telemetry and control interfaces through IEC104 master‑slave communication.
+</div>
+<div class="mt-3">
+<span class="badge badge-soft">Gateway</span>
+<span class="badge badge-soft">Interoperability</span>
+<span class="badge badge-soft">Simulation</span>
+</div>
+</div>
+</div>
+</a>
+</div>
+
+</div>
+
+<div class="mt-5 muted small">
+This test‑bed is intended for controlled R&D, validation, and security research.  
+It is not designed as a production deployment framework.
+</div>
+
+</div>
+
+</body>
+</html>
 
