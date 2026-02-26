@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IEC104 Master NCC Integration Server</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+body { background: #0b0f14; color: #e5e7eb; }
+    .bg-panel { background: #0f1720; border: 1px solid #1f2a37; }
+    .muted { color: #9aa4b2; }
+    .code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .badge-soft { background: rgba(13,110,253,.15); color: #9ec5fe; border: 1px solid rgba(13,110,253,.35); }
+    .badge-soft-ok { background: rgba(25,135,84,.15); color: #a7f3d0; border: 1px solid rgba(25,135,84,.35); }
+    .badge-soft-warn { background: rgba(255,193,7,.12); color: #fde68a; border: 1px solid rgba(255,193,7,.30); }
+    .badge-soft-danger { background: rgba(220,53,69,.12); color: #fecaca; border: 1px solid rgba(220,53,69,.30); }
+
+    .nav-tabs { border-bottom: 1px solid #1f2a37; }
+    .nav-tabs .nav-link { color: #9aa4b2; border: 0; }
+    .nav-tabs .nav-link:hover { color: #e5e7eb; }
+    .nav-tabs .nav-link.active {
+      background: #0f1720;
+      color: #e5e7eb;
+      border: 1px solid #1f2a37;
+      border-bottom-color: #0f1720;
+      border-top-left-radius: .75rem;
+      border-top-right-radius: .75rem;
+    }
+
+    .tab-content {
+      border: 1px solid #1f2a37;
+      border-top: 0;
+      border-radius: 0 0 .75rem .75rem;
+      background: #0f1720;
+    }
+
+    .card { background: #0f1720; border: 1px solid #1f2a37; }
+    .card-header { border-bottom: 1px solid #1f2a37; background: rgba(255,255,255,.02); }
+    .table { color: #e5e7eb; }
+    .table thead th { color: #cbd5e1; border-bottom: 1px solid #1f2a37; }
+    .table td, .table th { border-color: #1f2a37; }
+    .table tbody tr:hover { background: rgba(255,255,255,.03); }
+    .hr { border-top: 1px solid #1f2a37; opacity: 1; }
+    a { text-decoration: none; }
+    .pill { border: 1px solid #1f2a37; background: rgba(255,255,255,.02); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .small2 { font-size: .92rem; }
+    .callout {
+      border: 1px solid rgba(255,193,7,.35);
+      background: rgba(255,193,7,.08);
+      border-radius: .75rem;
+      padding: 1rem;
+    }
+  </style>
+</head>
+
+<body class="text-light">
+<div class="container py-4 py-md-5">
+
+  <div class="p-4 p-md-5 rounded-4 bg-panel mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div>
+        <h1 class="mb-2">IEC104 Master NCC Integration Server</h1>
+        <div class="muted small2">
+          FastAPI wrapper over an IEC 60870-5-104 master client stack. Connects to one or more IEC104 slaves,
+          aggregates telemetry, exposes live streams via WebSocket, and provides REST endpoints for commands and GI.
+        </div>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <span class="badge badge-soft rounded-pill px-3 py-2">IEC104 Master</span>
+        <span class="badge badge-soft rounded-pill px-3 py-2">FastAPI</span>
+        <span class="badge badge-soft rounded-pill px-3 py-2">REST + WebSocket</span>
+        <span class="badge badge-soft rounded-pill px-3 py-2">Multi-slave</span>
+        <span class="badge badge-soft rounded-pill px-3 py-2">Reconnect</span>
+      </div>
+    </div>
+
+    <hr class="hr my-4">
+
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="muted">
+          This package is structured as: <span class="mono">Library → Application → Server</span>.
+          The library wraps the IEC104 DLL (ctypes), the application manages multiple connections, and the server exposes external interfaces.
+        </div>
+        <div class="mt-2 muted">
+          Context-only note: this is intended for NCC/master-side interaction with your test bed slaves, not a general IEC104 toolkit.
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="p-3 rounded-4 pill">
+          <div class="fw-semibold mb-2">Runtime ports</div>
+          <div class="small2 muted">
+            <div>FastAPI: <span class="mono">0.0.0.0:8100</span></div>
+            <div>IEC104 slaves: from <span class="mono">config.json</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#interfaces" type="button" role="tab">External interfaces</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab">Configuration</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#model" type="button" role="tab">Data model</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#flows" type="button" role="tab">End-to-end flows</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#apis" type="button" role="tab">Classes & APIs</button></li>
+  </ul>
+
+  <div class="tab-content p-3 p-md-4">
+
+    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+      <div class="row g-3">
+        <div class="col-lg-7">
+          <div class="card rounded-4 h-100">
+            <div class="card-header fw-semibold">What this application does</div>
+            <div class="card-body small2 muted">
+              <ul class="mb-0">
+                <li>Runs a FastAPI server to expose IEC104 master capabilities.</li>
+                <li>Connects to multiple IEC104 slaves (from <span class="mono">config.json</span>).</li>
+                <li>Decodes incoming ASDUs (SP, DP, measured value short) into a normalized JSON map keyed by IOA.</li>
+                <li>Streams <span class="mono">reported_data</span> to WebSocket clients.</li>
+                <li>Provides REST endpoints to issue commands and trigger General Interrogation (GI).</li>
+                <li>Includes reconnect behavior with exponential backoff if a slave connection drops.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="card rounded-4 h-100">
+            <div class="card-header fw-semibold">Bundle files used</div>
+            <div class="card-body small2 muted">
+              <ul class="mb-0">
+                <li><span class="mono">Iec104Master.py</span> (startup)</li>
+                <li><span class="mono">ApiIntegrationServer</span> (FastAPI wrapper)</li>
+                <li><span class="mono">Iec104MasterApplication</span> (multi-slave orchestrator)</li>
+                <li><span class="mono">Iec104MasterLibrary</span> (single slave client)</li>
+                <li><span class="mono">Iec104Wrapper/iec60870.dll</span> (protocol stack)</li>
+                <li><span class="mono">config.json</span> (targets)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rounded-4 mt-3">
+        <div class="card-header fw-semibold">Public entrypoint</div>
+        <div class="card-body small2 muted">
+          <div>The entry script <span class="mono">Iec104Master.py</span> does:</div>
+          <ul class="mb-0 mt-2">
+            <li>Create <span class="mono">Api104IntegrationServer()</span></li>
+            <li>Run uvicorn with <span class="mono">host=0.0.0.0</span>, <span class="mono">port=8100</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="interfaces" role="tabpanel">
+      <div class="card rounded-4 mb-3">
+        <div class="card-header fw-semibold">External API surface</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+              <thead><tr><th>Path</th><th>Method</th><th>Purpose</th></tr></thead>
+              <tbody class="small2"><tr><td><span class='mono'>/reported_data</span></td><td>WebSocket</td><td>UI / consumers subscribe to live updates; sends initial snapshot then periodic updates + callback broadcasts.</td></tr><tr><td><span class='mono'>/data</span></td><td>GET</td><td>Returns current reported_data snapshot as JSON.</td></tr><tr><td><span class='mono'>/command?slave_id=...&select=...&ioa=...&value=...</span></td><td>GET</td><td>Sends IEC104 SingleCommand to the specified slave (select or operate depending on select flag).</td></tr><tr><td><span class='mono'>/send_gi?host=...</span></td><td>GET</td><td>Triggers General Interrogation (GI) to refresh values from a specific slave.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rounded-4">
+        <div class="card-header fw-semibold">Notes on WebSocket behavior</div>
+        <div class="card-body small2 muted">
+          <ul class="mb-0">
+            <li>On connect: server sends initial snapshot <span class="mono">master_app.get_reported_data()</span>.</li>
+            <li>Then it polls once per second and sends if there is data.</li>
+            <li>Additionally, slave updates trigger broadcasts via the callback mechanism.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="config" role="tabpanel">
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="card rounded-4 h-100">
+            <div class="card-header fw-semibold">Config file (config.json)</div>
+            <div class="card-body small2 muted">
+              Defines the set of IEC104 slaves the master should connect to.
+              <pre class="mb-0 p-3 rounded-4 pill text-light"><code class="code">{
+  "slave1": { "host": "172.16.1.120", "port": 2404 },
+  "slave2": { "host": "172.16.2.120", "port": 2404 }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card rounded-4 h-100">
+            <div class="card-header fw-semibold">Configured slaves (from this bundle)</div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                  <thead><tr><th>slave_id</th><th>host</th><th>port</th></tr></thead>
+                  <tbody class="small2"><tr><td><span class='mono'>slave1</span></td><td><span class='mono'>172.16.1.120</span></td><td>2404</td></tr><tr><td><span class='mono'>slave2</span></td><td><span class='mono'>172.16.2.120</span></td><td>2404</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rounded-4 mt-3">
+        <div class="card-header fw-semibold">How config is used</div>
+        <div class="card-body small2 muted">
+          <ul class="mb-0">
+            <li><span class="mono">Iec104MasterApplication.__init__</span> reads <span class="mono">config.json</span> and creates clients.</li>
+            <li><span class="mono">connect()</span> starts each client and wires callbacks.</li>
+            <li>Reconnect logic is per-client (threaded exponential backoff).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="model" role="tabpanel">
+      <div class="card rounded-4 mb-3">
+        <div class="card-header fw-semibold">Reported data model</div>
+        <div class="card-body small2 muted">
+          The master maintains a consolidated map <span class="mono">reported_data</span> with this structure:
+          <pre class="mb-0 p-3 rounded-4 pill text-light"><code class="code">{
+  "&lt;slave_id&gt;": {
+    "&lt;ioa&gt;": { "value": 1, "quality": 0, "timestamp": 1730000000000 },
+    "...":  { "value": 0, "quality": 0, "timestamp": 1730000001234 }
+  }
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="card rounded-4">
+        <div class="card-header fw-semibold">Type support in this implementation</div>
+        <div class="card-body small2 muted">
+          Incoming information objects are decoded using handlers mapped by <span class="mono">io_type</span>:
+          <ul class="mb-0 mt-2">
+            <li><span class="mono">30</span> → SinglePointWithCP56Time2a</li>
+            <li><span class="mono">31</span> → DoublePointWithCP56Time2a</li>
+            <li><span class="mono">36</span> → MeasuredValueShortWithCP56Time2a</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="flows" role="tabpanel">
+      
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card rounded-4 h-100">
+      <div class="card-header fw-semibold">Startup flow</div>
+      <div class="card-body small2 muted">
+        <ol class="mb-0">
+          <li>Run <span class="mono">Iec104Master.py</span> to start FastAPI on <span class="mono">0.0.0.0:8100</span>.</li>
+          <li>Server constructs <span class="mono">Iec104MasterApplication</span> and loads <span class="mono">config.json</span>.</li>
+          <li>One <span class="mono">Iec104MasterClient</span> is created per slave entry.</li>
+          <li>On FastAPI lifespan start, <span class="mono">master_app.connect()</span> starts each client and performs a GI.</li>
+          <li>Consumers connect to <span class="mono">/reported_data</span> to receive live values.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card rounded-4 h-100">
+      <div class="card-header fw-semibold">Update flow (telemetry)</div>
+      <div class="card-body small2 muted">
+        <ol class="mb-0">
+          <li>IEC104 slave sends ASDUs; client <span class="mono">_asdu_received</span> decodes elements.</li>
+          <li>Client updates <span class="mono">reported_data[ioa]</span> and invokes external callback.</li>
+          <li>Application aggregates per-slave data into <span class="mono">_reported_data</span>.</li>
+          <li>Server callback schedules WS broadcast on the event loop.</li>
+          <li>WebSocket clients receive JSON updates.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-0">
+  <div class="col-lg-6">
+    <div class="card rounded-4 h-100">
+      <div class="card-header fw-semibold">Command flow (NCC → slave)</div>
+      <div class="card-body small2 muted">
+        <ol class="mb-0">
+          <li>Caller invokes REST <span class="mono">/command</span> with <span class="mono">slave_id, select, ioa, value</span>.</li>
+          <li>Server calls <span class="mono">master_app.send_command</span>.</li>
+          <li>Client builds IEC104 <span class="mono">SingleCommand</span> and sends process command.</li>
+        </ol>
+        <div class="mt-2 muted">
+          Note: The API uses <span class="mono">select</span> boolean to represent both select and execute flows via the IEC104 library call.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card rounded-4 h-100">
+      <div class="card-header fw-semibold">GI flow (refresh)</div>
+      <div class="card-body small2 muted">
+        <ol class="mb-0">
+          <li>Caller invokes <span class="mono">/send_gi?host=&lt;slave_id&gt;</span>.</li>
+          <li>Application calls <span class="mono">client.send_gi()</span> which sends interrogation command.</li>
+          <li>Incoming ASDU responses update <span class="mono">reported_data</span> and get pushed to subscribers.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+    <div class="tab-pane fade" id="apis" role="tabpanel">
+      
+    <div class="card rounded-4 mb-3">
+      <div class="card-header fw-semibold">Class: <span class="mono">Api104IntegrationServer</span></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0">
+            <thead><tr><th>Method signature</th><th>Visibility</th><th>Sync/Async</th><th>Purpose</th></tr></thead>
+            <tbody class="small2"><tr><td><span class='mono'>def __init__(self)</span></td><td>Internal</td><td>sync</td><td>Creates FastAPI app, sets CORS, instantiates master application, registers WS and REST routes.</td></tr><tr><td><span class='mono'>async def _lifespan(self, app)</span></td><td>Internal</td><td>async</td><td>FastAPI lifespan hook; captures event loop and triggers master_app.connect().</td></tr><tr><td><span class='mono'>async def send_gi(self, host)</span></td><td>Public</td><td>async</td><td>REST endpoint; triggers GI (interrogation) for a given slave_id/host.</td></tr><tr><td><span class='mono'>async def websocket_report(self, websocket)</span></td><td>Public</td><td>async</td><td>WebSocket endpoint; pushes initial and updated reported_data to connected clients.</td></tr><tr><td><span class='mono'>def _call_back(self, data)</span></td><td>Internal</td><td>sync</td><td>Callback wired into master_app; schedules broadcast on FastAPI event loop.</td></tr><tr><td><span class='mono'>async def _broadcast(self, message)</span></td><td>Internal</td><td>async</td><td>Sends JSON message to all connected WS subscribers; removes dead sockets.</td></tr><tr><td><span class='mono'>async def _send_message(self, websocket, message)</span></td><td>Internal</td><td>async</td><td>Helper to send a message to a single websocket (unused in flow).</td></tr><tr><td><span class='mono'>async def command(self, slave_id, select, ioa, value)</span></td><td>Public</td><td>async</td><td>REST endpoint; forwards a select/operate boolean command to a slave via master_app.</td></tr><tr><td><span class='mono'>async def data(self)</span></td><td>Public</td><td>async</td><td>REST endpoint; returns current reported_data snapshot.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+      
+    <div class="card rounded-4 mb-3">
+      <div class="card-header fw-semibold">Class: <span class="mono">Iec104MasterApplication</span></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0">
+            <thead><tr><th>Method signature</th><th>Visibility</th><th>Sync/Async</th><th>Purpose</th></tr></thead>
+            <tbody class="small2"><tr><td><span class='mono'>def __init__(self)</span></td><td>Internal</td><td>sync</td><td>Loads config.json and creates one Iec104MasterClient per configured slave.</td></tr><tr><td><span class='mono'>def subscribe(self, callback)</span></td><td>Public</td><td>sync</td><td>Registers external callback for consolidated reported_data updates.</td></tr><tr><td><span class='mono'>def connect(self)</span></td><td>Public</td><td>sync</td><td>Starts all client connections and subscribes to each client callback.</td></tr><tr><td><span class='mono'>def _reported_data_received(self, received_data)</span></td><td>Internal</td><td>sync</td><td>Aggregates per-slave updates into one dict and triggers external callback.</td></tr><tr><td><span class='mono'>def get_reported_data(self, slave)</span></td><td>Public</td><td>sync</td><td>Returns full reported_data or a specific slave’s data.</td></tr><tr><td><span class='mono'>def send_command(self, slave, command)</span></td><td>Public</td><td>sync</td><td>Routes a command dict to the chosen slave client.</td></tr><tr><td><span class='mono'>def send_gi(self, host)</span></td><td>Public</td><td>sync</td><td>Triggers interrogation on the chosen slave.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+      
+    <div class="card rounded-4 mb-3">
+      <div class="card-header fw-semibold">Class: <span class="mono">Iec104MasterClient</span></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0">
+            <thead><tr><th>Method signature</th><th>Visibility</th><th>Sync/Async</th><th>Purpose</th></tr></thead>
+            <tbody class="small2"><tr><td><span class='mono'>def __init__(self, host, port, slave_id)</span></td><td>Internal</td><td>sync</td><td>Initializes IEC104 connection parameters, handlers, reconnect logic, and type handlers.</td></tr><tr><td><span class='mono'>def subscribe(self, callback)</span></td><td>Public</td><td>sync</td><td>Registers external callback invoked on each ASDU update batch.</td></tr><tr><td><span class='mono'>def _connection_state_handler(self, parameter, connection, event)</span></td><td>Internal</td><td>sync</td><td>Connection event handler; triggers reconnect on closed connection.</td></tr><tr><td><span class='mono'>def _start_reconnect_loop(self)</span></td><td>Internal</td><td>sync</td><td>Starts a background reconnect thread if not already running.</td></tr><tr><td><span class='mono'>def _reconnect_loop(self)</span></td><td>Internal</td><td>sync</td><td>Reconnect loop with exponential backoff; calls start() until successful or stopped.</td></tr><tr><td><span class='mono'>def start(self)</span></td><td>Public</td><td>sync</td><td>Creates CS104 connection, registers handlers, connects, starts data transfer, and sends GI.</td></tr><tr><td><span class='mono'>def send_interrogation(self, cot, ca, qoi)</span></td><td>Public</td><td>sync</td><td>Sends interrogation command (GI) using CS104 API.</td></tr><tr><td><span class='mono'>def stop(self)</span></td><td>Public</td><td>sync</td><td>Stops reconnect thread and destroys connection.</td></tr><tr><td><span class='mono'>def _asdu_received(self, parameter, connection, asdu)</span></td><td>Internal</td><td>sync</td><td>ASDU receive handler; decodes elements by type and updates reported_data dict.</td></tr><tr><td><span class='mono'>def _handle_single_point(self, io)</span></td><td>Internal</td><td>sync</td><td>Parses SP value/quality/timestamp from received info object.</td></tr><tr><td><span class='mono'>def _handle_double_point(self, io)</span></td><td>Internal</td><td>sync</td><td>Parses DP value/quality/timestamp from received info object.</td></tr><tr><td><span class='mono'>def _handle_short_measured_value(self, io)</span></td><td>Internal</td><td>sync</td><td>Parses measured value/quality/timestamp from received info object.</td></tr><tr><td><span class='mono'>def send_command(self, select, value, ioa)</span></td><td>Public</td><td>sync</td><td>Sends IEC104 SingleCommand (select/execute) to slave for a given IOA and value.</td></tr><tr><td><span class='mono'>def send_gi(self)</span></td><td>Public</td><td>sync</td><td>Convenience wrapper to call send_interrogation().</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+
+      <div class="card rounded-4">
+        <div class="card-header fw-semibold">Operational notes</div>
+        <div class="card-body small2 muted">
+          <ul class="mb-0">
+            <li>Reconnect is triggered when the connection handler receives <span class="mono">CS104_CONNECTION_CLOSED</span>.</li>
+            <li>On successful connect, the client sends StartDT and immediately requests GI.</li>
+            <li>Commands are issued using <span class="mono">CS104_Connection_sendProcessCommandEx</span> with <span class="mono">CS101_COT_ACTIVATION</span>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="mt-4 muted small2">
+    Document: IEC104 Master NCC Integration Server. Generated from supplied bundle. Scoped to this application.
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
